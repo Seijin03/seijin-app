@@ -13,7 +13,7 @@ type FacePositionStatus = "no-face" | "too-far" | "too-left" | "too-right" | "to
 
 const API_BASE = "https://329eb4d0-5825-4b28-88c7-a169ac1fad0e-00-1rqlr71r5qxn1.worf.replit.dev/flask-api/auth"
 const FACE_API_CDN = "https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"
-const MODELS_URL = "https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@master/weights"
+const MODELS_URL = "https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/weights"
 
 declare global {
   interface Window {
@@ -76,13 +76,10 @@ export function HexGateAuth() {
         throw new Error("face-api.js not available")
       }
 
-      setModelLoadProgress("Loading TinyFaceDetector...")
+      setModelLoadProgress("Loading face detector... (1/2)")
       await faceapi.nets.tinyFaceDetector.loadFromUri(MODELS_URL)
 
-      setModelLoadProgress("Loading FaceLandmark68Net...")
-      await faceapi.nets.faceLandmark68Net.loadFromUri(MODELS_URL)
-
-      setModelLoadProgress("Loading FaceRecognitionNet...")
+      setModelLoadProgress("Loading recognition model... (2/2)")
       await faceapi.nets.faceRecognitionNet.loadFromUri(MODELS_URL)
 
       setModelLoadProgress("")
@@ -289,9 +286,7 @@ export function HexGateAuth() {
     const video = videoRef.current
 
     // Detect face with landmarks and descriptor
-    const detection = await faceapi
-      .detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
-      .withFaceLandmarks()
+    const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
       .withFaceDescriptor()
 
     if (!detection) {
@@ -492,7 +487,10 @@ export function HexGateAuth() {
                   <div className="text-center space-y-2">
                     <h3 className="text-lg font-semibold text-foreground">Initializing HexGate...</h3>
                     <p className="text-sm text-muted-foreground">
-                      {modelLoadProgress || "Preparing secure face detection"}
+                      {modelLoadProgress || "Loading face detection models"}
+                    </p>
+                    <p className="text-xs text-muted-foreground/60">
+                      First visit takes 1-2 mins. Instant after that.
                     </p>
                   </div>
                   {/* Progress bar */}
@@ -500,9 +498,9 @@ export function HexGateAuth() {
                     <div 
                       className="h-full bg-gradient-to-r from-accent to-primary rounded-full transition-all duration-500"
                       style={{ 
-                        width: modelLoadProgress.includes("TinyFace") ? "33%" 
-                             : modelLoadProgress.includes("Landmark") ? "66%" 
-                             : modelLoadProgress.includes("Recognition") ? "90%" 
+                        width: modelLoadProgress.includes("1/2") ? "50%" 
+                             : modelLoadProgress.includes("2/2") ? "90%"
+                             : "10%",
                              : "10%",
                         animation: "pulse 1.5s ease-in-out infinite"
                       }}
