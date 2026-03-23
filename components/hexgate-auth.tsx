@@ -501,7 +501,6 @@ export function HexGateAuth() {
                         width: modelLoadProgress.includes("1/2") ? "50%" 
                              : modelLoadProgress.includes("2/2") ? "90%"
                              : "10%",
-                             : "10%",
                         animation: "pulse 1.5s ease-in-out infinite"
                       }}
                     />
