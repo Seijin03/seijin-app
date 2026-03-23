@@ -13,7 +13,7 @@ type FacePositionStatus = "no-face" | "too-far" | "too-left" | "too-right" | "to
 
 const API_BASE = "https://329eb4d0-5825-4b28-88c7-a169ac1fad0e-00-1rqlr71r5qxn1.worf.replit.dev/flask-api/auth"
 const FACE_API_CDN = "https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"
-const MODELS_URL = "https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/weights"
+const MODELS_URL = "https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@0.22.2/weights"
 
 declare global {
   interface Window {
