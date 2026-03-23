@@ -201,11 +201,12 @@ export default function SeijinHub() {
               {tab.charAt(0).toUpperCase() + tab.slice(1)}
             </button>
           ))}
-          {(["leaderboard", "airdrop"] as const).map((tab) => (
-            <button key={tab} disabled className="flex items-center gap-2 px-4 py-2 rounded-lg border border-[#6b6b7a]/30 text-[#6b6b7a] text-sm cursor-not-allowed opacity-60">
-              <Lock className="w-3.5 h-3.5" />{tab.charAt(0).toUpperCase() + tab.slice(1)}
-            </button>
-          ))}
+          <a href="/leaderboard" className="px-4 py-2 rounded-lg border border-[#d4a520]/30 text-[#d4a520] text-sm hover:bg-[#d4a520]/10 transition-all font-medium">
+            Leaderboard
+          </a>
+          <button disabled className="flex items-center gap-2 px-4 py-2 rounded-lg border border-[#6b6b7a]/30 text-[#6b6b7a] text-sm cursor-not-allowed opacity-60">
+            <Lock className="w-3.5 h-3.5" />Airdrop
+          </button>
         </div>
 
         {activeTab === "missions" && (
