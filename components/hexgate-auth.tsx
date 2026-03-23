@@ -81,10 +81,13 @@ export function HexGateAuth() {
         throw new Error("face-api.js not available")
       }
 
-      setModelLoadProgress("Loading face detector... (1/2)")
+      setModelLoadProgress("Loading face detector... (1/3)")
       await faceapi.nets.tinyFaceDetector.loadFromUri(MODELS_URL)
 
-      setModelLoadProgress("Loading recognition model... (2/2)")
+      setModelLoadProgress("Loading landmarks... (2/3)")
+      await faceapi.nets.faceLandmark68Net.loadFromUri(MODELS_URL)
+
+      setModelLoadProgress("Loading recognition model... (3/3)")
       await faceapi.nets.faceRecognitionNet.loadFromUri(MODELS_URL)
 
       setModelLoadProgress("")
@@ -295,6 +298,7 @@ export function HexGateAuth() {
 
     // Detect face with landmarks and descriptor
     const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
+      .withFaceLandmarks()
       .withFaceDescriptor()
 
     if (!detection) {
@@ -506,8 +510,9 @@ export function HexGateAuth() {
                     <div 
                       className="h-full bg-gradient-to-r from-accent to-primary rounded-full transition-all duration-500"
                       style={{ 
-                        width: modelLoadProgress.includes("1/2") ? "50%" 
-                             : modelLoadProgress.includes("2/2") ? "90%"
+                        width: modelLoadProgress.includes("1/3") ? "33%" 
+                             : modelLoadProgress.includes("2/3") ? "66%"
+                             : modelLoadProgress.includes("3/3") ? "90%"
                              : "10%",
                         animation: "pulse 1.5s ease-in-out infinite"
                       }}
