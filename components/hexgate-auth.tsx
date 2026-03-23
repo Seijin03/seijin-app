@@ -59,11 +59,16 @@ export function HexGateAuth() {
     })
   }, [])
 
+  // Use refs to guard loading — prevents re-runs when state changes
+  const modelsLoadedRef = useRef(false)
+  const modelsLoadingRef = useRef(false)
+
   // Load face-api.js models - returns a promise
   const loadModels = useCallback(async (): Promise<boolean> => {
-    if (modelsLoaded) return true
-    if (loadingModels) return false
+    if (modelsLoadedRef.current) return true
+    if (modelsLoadingRef.current) return false
 
+    modelsLoadingRef.current = true
     setLoadingModels(true)
     setModelLoadError(null)
     setModelLoadProgress("Loading face-api.js...")
@@ -83,16 +88,19 @@ export function HexGateAuth() {
       await faceapi.nets.faceRecognitionNet.loadFromUri(MODELS_URL)
 
       setModelLoadProgress("")
+      modelsLoadedRef.current = true
+      modelsLoadingRef.current = false
       setModelsLoaded(true)
       setLoadingModels(false)
       return true
     } catch (error) {
       console.error("Error loading models:", error)
+      modelsLoadingRef.current = false
       setModelLoadError(error instanceof Error ? error.message : "Failed to load face detection models")
       setLoadingModels(false)
       return false
     }
-  }, [modelsLoaded, loadingModels, loadFaceApiScript])
+  }, [loadFaceApiScript])
 
   const startCamera = useCallback(async (): Promise<boolean> => {
     try {
@@ -270,7 +278,7 @@ export function HexGateAuth() {
       isMounted = false
       stopCamera()
     }
-  }, [step, startCamera, stopCamera, loadModels, startFaceDetectionLoop])
+  }, [step, startCamera, stopCamera, loadModels, startFaceDetectionLoop])  // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleWalletContinue = () => {
     if (walletAddress.trim()) {
@@ -527,11 +535,15 @@ export function HexGateAuth() {
                         </>
                       )}
                       
-                      {/* Webcam video */}
+                      {/* Webcam video — only mount after camera is ready */}
                       {cameraError ? (
                         <div className="w-full h-full bg-secondary flex flex-col items-center justify-center text-muted-foreground">
                           <Camera className="w-12 h-12 mb-2 opacity-50" />
                           <span className="text-xs">Camera unavailable</span>
+                        </div>
+                      ) : !cameraReady ? (
+                        <div className="w-full h-full bg-secondary flex items-center justify-center">
+                          <Loader2 className="w-8 h-8 text-accent animate-spin" />
                         </div>
                       ) : (
                         <video
