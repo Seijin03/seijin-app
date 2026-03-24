@@ -13,7 +13,7 @@ type FacePositionStatus = "no-face" | "too-far" | "too-left" | "too-right" | "to
 
 const API_BASE = "https://329eb4d0-5825-4b28-88c7-a169ac1fad0e-00-1rqlr71r5qxn1.worf.replit.dev/flask-api/auth"
 const FACE_API_CDN = "https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"
-const MODELS_URL = "https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@0.22.2/weights"
+const MODELS_URL = "https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/weights"
 
 declare global {
   interface Window {
@@ -59,16 +59,11 @@ export function HexGateAuth() {
     })
   }, [])
 
-  // Use refs to guard loading — prevents re-runs when state changes
-  const modelsLoadedRef = useRef(false)
-  const modelsLoadingRef = useRef(false)
-
   // Load face-api.js models - returns a promise
   const loadModels = useCallback(async (): Promise<boolean> => {
-    if (modelsLoadedRef.current) return true
-    if (modelsLoadingRef.current) return false
+    if (modelsLoaded) return true
+    if (loadingModels) return false
 
-    modelsLoadingRef.current = true
     setLoadingModels(true)
     setModelLoadError(null)
     setModelLoadProgress("Loading face-api.js...")
@@ -81,29 +76,23 @@ export function HexGateAuth() {
         throw new Error("face-api.js not available")
       }
 
-      setModelLoadProgress("Loading face detector... (1/3)")
+      setModelLoadProgress("Loading face detector... (1/2)")
       await faceapi.nets.tinyFaceDetector.loadFromUri(MODELS_URL)
 
-      setModelLoadProgress("Loading landmarks... (2/3)")
-      await faceapi.nets.faceLandmark68Net.loadFromUri(MODELS_URL)
-
-      setModelLoadProgress("Loading recognition model... (3/3)")
+      setModelLoadProgress("Loading recognition model... (2/2)")
       await faceapi.nets.faceRecognitionNet.loadFromUri(MODELS_URL)
 
       setModelLoadProgress("")
-      modelsLoadedRef.current = true
-      modelsLoadingRef.current = false
       setModelsLoaded(true)
       setLoadingModels(false)
       return true
     } catch (error) {
       console.error("Error loading models:", error)
-      modelsLoadingRef.current = false
       setModelLoadError(error instanceof Error ? error.message : "Failed to load face detection models")
       setLoadingModels(false)
       return false
     }
-  }, [loadFaceApiScript])
+  }, [modelsLoaded, loadingModels, loadFaceApiScript])
 
   const startCamera = useCallback(async (): Promise<boolean> => {
     try {
@@ -281,7 +270,7 @@ export function HexGateAuth() {
       isMounted = false
       stopCamera()
     }
-  }, [step, startCamera, stopCamera, loadModels, startFaceDetectionLoop])  // eslint-disable-line react-hooks/exhaustive-deps
+  }, [step, startCamera, stopCamera, loadModels, startFaceDetectionLoop])
 
   const handleWalletContinue = () => {
     if (walletAddress.trim()) {
@@ -298,7 +287,6 @@ export function HexGateAuth() {
 
     // Detect face with landmarks and descriptor
     const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
-      .withFaceLandmarks()
       .withFaceDescriptor()
 
     if (!detection) {
@@ -510,9 +498,8 @@ export function HexGateAuth() {
                     <div 
                       className="h-full bg-gradient-to-r from-accent to-primary rounded-full transition-all duration-500"
                       style={{ 
-                        width: modelLoadProgress.includes("1/3") ? "33%" 
-                             : modelLoadProgress.includes("2/3") ? "66%"
-                             : modelLoadProgress.includes("3/3") ? "90%"
+                        width: modelLoadProgress.includes("1/2") ? "50%" 
+                             : modelLoadProgress.includes("2/2") ? "90%"
                              : "10%",
                         animation: "pulse 1.5s ease-in-out infinite"
                       }}
@@ -540,15 +527,11 @@ export function HexGateAuth() {
                         </>
                       )}
                       
-                      {/* Webcam video — only mount after camera is ready */}
+                      {/* Webcam video */}
                       {cameraError ? (
                         <div className="w-full h-full bg-secondary flex flex-col items-center justify-center text-muted-foreground">
                           <Camera className="w-12 h-12 mb-2 opacity-50" />
                           <span className="text-xs">Camera unavailable</span>
-                        </div>
-                      ) : !cameraReady ? (
-                        <div className="w-full h-full bg-secondary flex items-center justify-center">
-                          <Loader2 className="w-8 h-8 text-accent animate-spin" />
                         </div>
                       ) : (
                         <video
